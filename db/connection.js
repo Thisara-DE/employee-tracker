@@ -11,6 +11,10 @@ const dbConfig = {
 }
 
 const db = mysql.createConnection(dbConfig,
-    console.log(`Connected to the ${process.env.DB_NAME} database.`));
+    console.log(`Connected to the ${process.env.DB_NAME} database.`)).promise();
+
+
+
 
 module.exports = db;
+

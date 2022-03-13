@@ -18,9 +18,13 @@
   },
   "homepage": "https://github.com/ThisaraMallawaArachchige/employee-tracker#readme",
   "dependencies": {
-    "console.table": "^0.10.0",
+    "dotenv": "^16.0.0",
+    "easy-table": "^1.2.0",
     "express": "^4.17.3",
     "inquirer": "^8.2.1",
     "mysql2": "^2.3.3"
+  },
+  "devDependencies": {
+    "console.table": "^0.10.0"
   }
 }
