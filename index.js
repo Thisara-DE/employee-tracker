@@ -1,22 +1,9 @@
+//Importing npm packages and db connection
 const inquirer = require('inquirer');
 const db = require('./db/connection');
+const cTable = require('console.table');
 
-    // Extras
-        //Update employee managers
-        //View employees by manager
-        //View employees by department
-        //Delete departments, roles, and employees
-        //View the total utilized budget of a department—in other words, the combined salaries of all employees in that department.
-// create functions to,
-    //prompt user with questions
-
-
-    //query the DB with queries created earlier
-    //use console.table to display data in the console
-
-    
-    
-
+// initializing user prompts
 const initPrompt = () => {
     return inquirer.prompt([
         {
@@ -73,12 +60,12 @@ const initPrompt = () => {
 initPrompt();
 
 
-
+// View all departments
 function getAllDepartments() {
     const sql = `SELECT id, dep_name AS name FROM department`;    
     DBCall_getAllDepartments(sql);
 
-    async function DBCall_getAllDepartments(sql){
+    async function DBCall_getAllDepartments(sql,params){
         try {
             const results = await db.query(sql);
             if(results) {                
@@ -93,6 +80,7 @@ function getAllDepartments() {
     }    
 };
 
+// View all roles
 function getAllRoles() {
     const sql = `SELECT roles.id, roles.title, department.dep_name AS department, roles.salary
                 FROM roles
@@ -114,6 +102,7 @@ function getAllRoles() {
     }
 };
 
+// View all employees
 function getAllEmployees() {
     const sql = `SELECT e.id, e.first_name, e.last_name, r.title, d.dep_name AS department, r.salary, concat(m.first_name," ",m.last_name) AS manager
                 FROM employee e
@@ -137,6 +126,7 @@ function getAllEmployees() {
     }
 }
 
+// Add a department 
 function addDepartment() {
     return inquirer.prompt([
         {
@@ -174,11 +164,14 @@ function addDepartment() {
     })
 };
 
+// Add a role
 function addRole() {    
     db.query('SELECT dep_name FROM department')
         .then(function(dbResults) {
-            const departments = dbResults[0].json();
-            
+            const departments = [];
+            dbResults[0].forEach(result => {
+                departments.push(result.dep_name);                
+            })           
             return inquirer.prompt([
                 {
                     type: 'input',
@@ -212,8 +205,111 @@ function addRole() {
                     message: 'Which department does the role belong to?',
                     choices: departments
                 }
-            ])
-        }
-    
+            ]).then(answers => {
+                const sql = `INSERT INTO roles (title, salary, department_id) 
+                            VALUES (?,?,?)`;
+                department_id = departments.indexOf(answers.department) + 1;                                
+                const params = [answers.roleName,answers.salary,department_id];
+
+                DBCall_addRole(sql,params);
+
+                async function DBCall_addRole(sql,params) {
+                    try {
+                        const results = await db.query(sql,params);
+                        if(results) {                
+                            console.log(`+++ Added ${params[0]} to the database`);
+                            
+                            initPrompt();
+                        }
+                    
+                    } catch (error){
+                        console.error ("xxx Database returned an error: \n", error);
+                    }
+                }
+            })
+        }    
     )
-}
+};
+
+// Add an employee
+function addEmployee() {
+    db.query("SELECT concat(e.first_name,' ',e.last_name) AS name,r.title FROM employee e RIGHT JOIN roles r ON e.role_id = r.id")
+        .then(function(dbResults) {
+            const roles = [];
+            const managers = ['None'];
+            dbResults[0].forEach(result => {
+                if(roles.indexOf(result.title) === -1)
+                roles.push(result.title);                
+            })
+            dbResults[0].forEach(result => {
+                if(result.name != null) {
+                managers.push(result.name);
+                }                
+            })
+            
+        return inquirer.prompt([
+            {
+                type: 'input',
+                name: 'firstName',
+                message: "What is the employee's first name?",
+                validate: (firstName) => {
+                    if(firstName) {
+                        return true;
+                    } else {
+                        console.log(`Please enter the employee's first name`);
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'input',
+                name: 'lastName',
+                message: "What is the employee's last name?",
+                validate: (lastName) => {
+                    if(lastName) {
+                        return true;
+                    } else {
+                        console.log(`Please enter the employee's last name`);
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: "What is the employee's role?",
+                choices: roles
+            },
+            {
+                type: 'list',
+                name: 'manager',
+                message: "Who is the employee's manager?",
+                choices: managers
+            }
+        ]).then(answers => {
+            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) 
+                        VALUES (?,?,?,?)`;
+            role_id = roles.indexOf(answers.role) + 1;
+            manager_id = managers.indexOf(answers.manager) - 1;                                
+            const params = [answers.firstName,answers.lastName,role_id,manager_id];
+            
+            DBCall_addEmployee(sql,params);
+
+            async function DBCall_addEmployee(sql,params) {
+                try {
+                    const results = await db.query(sql,params);
+                    if(results) {                
+                        console.log(`+++ Added ${params[0]} to the database`);
+                        
+                        initPrompt();
+                    }
+                
+                } catch (error){
+                    console.error ("xxx Database returned an error: \n", error);
+                }
+            }
+        })
+    })
+};
+
+// Update an employee role
