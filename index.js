@@ -33,7 +33,7 @@ const initPrompt = () => {
                 addEmployee();
                 break;
             case 'Update an employee role':
-                addEmployee();
+                updateEmployee();
                 break;
             case 'Update employee manager':
                 console.log('Coming soon!');
