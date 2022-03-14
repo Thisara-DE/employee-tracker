@@ -33,7 +33,7 @@ const initPrompt = () => {
                 addEmployee();
                 break;
             case 'Update an employee role':
-                updateEmployee();
+                updateEmployeeRole();
                 break;
             case 'Update employee manager':
                 console.log('Coming soon!');
@@ -208,7 +208,7 @@ function addRole() {
             ]).then(answers => {
                 const sql = `INSERT INTO roles (title, salary, department_id) 
                             VALUES (?,?,?)`;
-                department_id = departments.indexOf(answers.department) + 1;                                
+                const department_id = departments.indexOf(answers.department) + 1;                                
                 const params = [answers.roleName,answers.salary,department_id];
 
                 DBCall_addRole(sql,params);
@@ -233,13 +233,14 @@ function addRole() {
 
 // Add an employee
 function addEmployee() {
-    db.query("SELECT concat(e.first_name,' ',e.last_name) AS name,r.title FROM employee e RIGHT JOIN roles r ON e.role_id = r.id")
+    db.query("SELECT concat(e.first_name,' ',e.last_name) AS name,r.title FROM employee e RIGHT JOIN roles r ON e.role_id = r.id ORDER BY e.id")
         .then(function(dbResults) {
             const roles = [];
             const managers = ['None'];
             dbResults[0].forEach(result => {
-                if(roles.indexOf(result.title) === -1)
-                roles.push(result.title);                
+                if(roles.indexOf(result.title) === -1) {
+                roles.push(result.title);  
+                }              
             })
             dbResults[0].forEach(result => {
                 if(result.name != null) {
@@ -289,8 +290,8 @@ function addEmployee() {
         ]).then(answers => {
             const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) 
                         VALUES (?,?,?,?)`;
-            role_id = roles.indexOf(answers.role) + 1;
-            manager_id = managers.indexOf(answers.manager) - 1;                                
+            const role_id = roles.indexOf(answers.role) + 1;
+            const manager_id = managers.indexOf(answers.manager) - 1;                                
             const params = [answers.firstName,answers.lastName,role_id,manager_id];
             
             DBCall_addEmployee(sql,params);
@@ -313,3 +314,57 @@ function addEmployee() {
 };
 
 // Update an employee role
+function updateEmployeeRole() {
+    db.query("SELECT concat(e.first_name,' ',e.last_name) AS name,r.title FROM employee e RIGHT JOIN roles r ON e.role_id = r.id ORDER BY e.id")
+        .then(function(dbResults) {
+            const roles = [];
+            const employees = [];
+            dbResults[0].forEach(result => {
+                if(roles.indexOf(result.title) === -1){
+                roles.push(result.title);  
+                }              
+            })
+            dbResults[0].forEach(result => {
+                if(result.name != null) {
+                    employees.push(result.name);
+                }                
+            })
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: "What is the employee's role?",
+                choices: employees
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: "Who is the employee's manager?",
+                choices: roles
+            }
+        ]).then(answers => {
+            const sql = `UPDATE employee
+                        SET role_id = ?
+                        WHERE id = ?`;
+            const role_id = roles.indexOf(answers.role) + 1;
+            const employee_id = employees.indexOf(answers.employee) + 1;                                
+            const params = [role_id,employee_id];
+            
+            DBCall_addEmployee(sql,params);
+
+            async function DBCall_addEmployee(sql,params) {
+                try {
+                    const results = await db.query(sql,params);
+                    if(results) {                
+                        console.log(`+++ Added ${params[0]} to the database`);
+                        
+                        initPrompt();
+                    }
+                
+                } catch (error){
+                    console.error ("xxx Database returned an error: \n", error);
+                }
+            }
+        })
+    })
+};
