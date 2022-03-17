@@ -10,7 +10,7 @@ const initPrompt = () => {
             type: 'list',
             name: 'action',
             message: "What would you like to do?",
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'Update employee manager', 'View employees by manager', 'View employees by department', 'Delete departments, roles, and employees', 'View the total utilized budget of a department', 'Quit']
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'Update employee manager', 'View employees by manager', 'View employees by department', 'Delete department, role, and employee', 'View the total utilized budget of a department', 'Quit']
         }
     ]).then(answer => {
         switch(answer.action) {
@@ -44,11 +44,11 @@ const initPrompt = () => {
             case 'View employees by department':
                 viewEmployeesByDep();
                 break;
-            case 'Delete departments, roles, and employees':
-                console.log('Coming soon!');
+            case 'Delete department, role, and employee':
+                deleteItems();                
                 break;
             case 'View the total utilized budget of a department':
-                console.log('Coming soon!');
+                totalBudgetByDep();
                 break;
             case 'Quit':
                 console.log('See you soon, bye!');
@@ -451,6 +451,7 @@ function viewEmployeesByManager(){
     }
 };
 
+// View employees by their department
 function viewEmployeesByDep() {
     const sql = `SELECT d.dep_name AS department, r.title, concat(e.first_name," ", e.last_name) AS employee
                 FROM employee e
@@ -472,4 +473,86 @@ function viewEmployeesByDep() {
             console.error ("xxx Database returned an error: \n", error)
         }
     }
+}
+
+// Delete Department, Role or employee 
+function deleteItems() {    
+    return inquirer.prompt([
+        {
+            type: 'list',
+            name: 'delete',
+            message: 'Which one of these items do you want to delete?',
+            choices: ['Department', 'Role', 'Employee']
+        },
+        {
+            type: 'confirm',
+            name: 'confirmDel',
+            message: answer => `Are you sure you want to delete ${answer.delete}?`,
+            default: false
+        },
+        {
+            type: 'input',
+            name: 'idToDel',
+            message: answer => `What is the ${answer.delete} id you wish to delete?`,
+            validate: answer => {
+                if(answer) {                                          
+                    return true;
+                } else {
+                    console.log(`Please enter an id to delete.`);
+                    return false;
+                }
+                
+            },
+            when: answer => {
+                if(answer.confirmDel === true) {
+                    return true;
+                } else {
+                    return initPrompt();
+                }
+            }
+        }
+
+    ]).then(answers => {
+        const sql = `DELETE FROM ? WHERE id = ?`;
+        const delId = parseInt(answers.idToDel);
+
+        switch(answers.delete) {
+            case 'Department':
+                db.query("DELETE FROM department WHERE id = ?",delId);
+                console.log(`Department ID ${delId} deleted`)
+                initPrompt();                                
+                break;
+            case 'Role':
+                db.query("DELETE FROM roles WHERE id = ?",delId)
+                .then(() => {console.log(`Role ID ${delId} deleted`)
+                initPrompt();})
+                break;
+            case 'Employee':
+                db.query("DELETE FROM employee WHERE id = ?",delId);
+                console.log(`Employee ID ${delId} deleted`)
+                initPrompt();
+                break;
+
+        }
+    }).catch(err => {
+        console.log("Something went wrong ",err);
+        return;
+    })
+}
+
+// View total utilized budget by the department
+function totalBudgetByDep() {
+    const sql = `SELECT d.dep_name, concat('$', FORMAT(sum(r.salary),2)) AS 'Total Utilized Budget'
+                FROM roles r
+                JOIN department d ON r.department_id = d.id
+                GROUP BY d.dep_name`;
+    db.query(sql).then(dbResult => {
+        if(dbResult[0]) {
+            console.table(dbResult[0]);
+            initPrompt();
+        }        
+    }).catch(err => {
+        console.log("Something went wrong ",err);
+        initPrompt();        
+    })
 }
