@@ -61,6 +61,11 @@
   ## Questions
   If you have any questions, email me: thisaraeranga@gmail.com
 
+  ## Video walkthrough
+
+  Video 1: https://drive.google.com/file/d/1YYnMSE0a_mNLzyysblu8nfrDurPUtJxL/view
+  Video 2: https://drive.google.com/file/d/1rPDICjf8saf8LduUkjo1rd_3wQLxV_i7/view
+
   <br>
 
   ## &copy; 2022 by [ThisaraMallawaArachchige](https://github.com/ThisaraMallawaArachchige)
