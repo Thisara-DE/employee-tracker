@@ -288,10 +288,11 @@ function addEmployee() {
                 choices: managers
             }
         ]).then(answers => {
+            
             const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) 
                         VALUES (?,?,?,?)`;
             const role_id = roles.indexOf(answers.role) + 1;
-            const manager_id = managers.indexOf(answers.manager) - 1;                                
+            const manager_id = managers.indexOf(answers.manager);                                
             const params = [answers.firstName,answers.lastName,role_id,manager_id];
             
             DBCall_addEmployee(sql,params);
@@ -309,6 +310,7 @@ function addEmployee() {
                     console.error ("xxx Database returned an error: \n", error);
                 }
             }
+            
         })
     })
 };
