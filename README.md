@@ -63,7 +63,7 @@
 
   ## Video walkthrough
 
-  Video 1: https://drive.google.com/file/d/1YYnMSE0a_mNLzyysblu8nfrDurPUtJxL/view
+  Video 1: https://drive.google.com/file/d/1YYnMSE0a_mNLzyysblu8nfrDurPUtJxL/view <br>
   Video 2: https://drive.google.com/file/d/1rPDICjf8saf8LduUkjo1rd_3wQLxV_i7/view
 
   <br>
