@@ -36,13 +36,13 @@ const initPrompt = () => {
                 updateEmployeeRole();
                 break;
             case 'Update employee manager':
-                console.log('Coming soon!');
+                updateEmployeeManager();                
                 break;
             case 'View employees by manager':
-                console.log('Coming soon!');
+                viewEmployeesByManager();
                 break;
             case 'View employees by department':
-                console.log('Coming soon!');
+                viewEmployeesByDep();
                 break;
             case 'Delete departments, roles, and employees':
                 console.log('Coming soon!');
@@ -368,3 +368,108 @@ function updateEmployeeRole() {
         })
     })
 };
+
+// Update employee manager
+function updateEmployeeManager() {
+    db.query("SELECT concat(e.first_name,' ',e.last_name) AS name FROM employee e ORDER BY e.id")
+        .then(dbEmployeeList => {
+            const employeeArr = [];
+            dbEmployeeList[0].forEach(employee => {
+                employeeArr.push(employee.name);                
+            })            
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employee',
+                    message: "Which employee's manager do you want to change?",
+                    choices: employeeArr
+                }
+            ]).then(answer => {
+                const employee_id = employeeArr.indexOf(answer.employee) + 1;
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: "Who do you want to assign as the new manager?",
+                        choices: employeeArr
+                        // validate: (manager) => {
+                        //     if(manager === employeeArr[employee_id] -1) {
+                        //         console.log('Please select a different person');
+                        //         console.log(employeeArr[employee_id] -1);
+                        //     }
+                        // }
+                    }
+                ])
+                .then(selection => {
+                    const manager_id = employeeArr.indexOf(selection.manager) + 1;
+                    const sql = `UPDATE employee
+                        SET manager_id = ?
+                        WHERE id = ?`;
+                    const params = [manager_id, employee_id]
+                    
+                    DBCall_updateManager(sql,params);
+
+                    async function DBCall_updateManager(sql,params) {
+                        try {
+                            const results = await db.query(sql,params);
+                            if(results) {                
+                                console.log(`+++ Updated the manager of employee# ${params[1]}`);
+                                
+                                initPrompt();
+                            }
+                        
+                        } catch (error){
+                            console.error ("xxx Database returned an error: \n", error);
+                        }
+                    }
+                })
+            })            
+        })
+};
+
+// View employees by manager
+function viewEmployeesByManager(){
+    const sql = `SELECT e.id as manager_id, concat(e.first_name,' ', e.last_name) AS manager,
+                concat(m.first_name,' ', m.last_name) AS employee 
+                FROM employee e LEFT JOIN employee m ON m.manager_id = e.id 
+                WHERE m.id is NOT NULL`;
+    
+    DBCall_viewEmployeesByManager(sql);
+
+    async function DBCall_viewEmployeesByManager(sql,params){
+        try {
+            const results = await db.query(sql);
+            if(results) {                
+                // console.log("+++ Database returned results: \n", results[0]);
+                console.table(results[0]);
+                initPrompt();
+            }
+        
+        } catch (error){
+            console.error ("xxx Database returned an error: \n", error)
+        }
+    }
+};
+
+function viewEmployeesByDep() {
+    const sql = `SELECT d.dep_name AS department, r.title, concat(e.first_name," ", e.last_name) AS employee
+                FROM employee e
+                LEFT JOIN roles r ON e.role_id = r.id
+                LEFT JOIN department d ON r.department_id = d.id`;
+    
+    DBCall_viewEmployeesByManager(sql);
+
+    async function DBCall_viewEmployeesByManager(sql,params){
+        try {
+            const results = await db.query(sql);
+            if(results) {                
+                // console.log("+++ Database returned results: \n", results[0]);
+                console.table(results[0]);
+                initPrompt();
+            }
+        
+        } catch (error){
+            console.error ("xxx Database returned an error: \n", error)
+        }
+    }
+}
